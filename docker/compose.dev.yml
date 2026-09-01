@@ -1,0 +1,40 @@
+services:
+  db:
+    container_name: sw-db-dev
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: sw
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d sw"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # redis:
+  #   container_name: sw-redis-dev
+  #   image: redis:alpine
+  #   ports:
+  #     - "6379:6379"
+
+  # nginx:
+  #   container_name: sw-nginx-dev
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   volumes:
+  #     - ../frontend:/usr/share/nginx/html:ro
+  #     - ../nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+  #   environment:
+  #     - BACKEND_HOST=${BACKEND_HOST}
+  #     - BACKEND_PORT=${BACKEND_PORT}
+
+volumes:
+  postgres_data_dev:
