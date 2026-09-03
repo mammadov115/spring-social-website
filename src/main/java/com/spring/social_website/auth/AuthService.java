@@ -5,6 +5,7 @@ import com.spring.social_website.auth.dto.LoginResponseDto;
 import com.spring.social_website.auth.dto.RegisterResponseDto;
 import com.spring.social_website.auth.dto.RegisterRequestDto;
 import com.spring.social_website.auth.jwt.JwtService;
+import com.spring.social_website.auth.token.RefreshTokenEntity;
 import com.spring.social_website.auth.token.RefreshTokenService;
 import com.spring.social_website.exception.EmailAlreadyInUseException;
 import com.spring.social_website.user.UserEntity;
@@ -58,5 +59,11 @@ public class AuthService {
         userRepository.save(user);
 
         return new RegisterResponseDto("User registered successfully");
+    }
+
+    public LoginResponseDto refresh(String refreshToken){
+        RefreshTokenEntity tokenEntity = refreshTokenService.validate(refreshToken);
+        String newAccessToken = jwtService.generateToken(tokenEntity.getUser().getEmail());
+        return new LoginResponseDto(newAccessToken);
     }
 }
