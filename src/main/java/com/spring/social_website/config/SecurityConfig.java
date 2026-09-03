@@ -3,6 +3,10 @@ package com.spring.social_website.config;
 import com.spring.social_website.user.UserDetailsServiceImpl;
 import com.spring.social_website.auth.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.web.access.AccessDeniedHandler;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,13 +34,18 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            System.out.println("403 reason: " + accessDeniedException.getMessage());
+                            response.sendError(403, accessDeniedException.getMessage());
+                        }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(
-                            "/swagger-ui/**",
-                            "/swagger-ui.html",
-                            "/v3/api-docs/**"
-                        ).permitAll()
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**")
+                        .permitAll()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter,
