@@ -1,16 +1,20 @@
 package com.spring.social_website.auth;
 
+import com.spring.social_website.auth.dto.ChangePasswordRequestDto;
 import com.spring.social_website.auth.dto.LoginRequestDto;
 import com.spring.social_website.auth.dto.LoginResponseDto;
 import com.spring.social_website.auth.dto.RegisterRequestDto;
 import com.spring.social_website.auth.dto.RegisterResponseDto;
 import com.spring.social_website.auth.token.RefreshTokenService;
+
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -51,4 +55,11 @@ public class AuthController {
         }
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Void> changePassword(@AuthenticationPrincipal  String email, @Valid @RequestBody ChangePasswordRequestDto request) {
+        authService.changePassword(email, request);
+        return ResponseEntity.noContent().build();
+    }
+    
 }

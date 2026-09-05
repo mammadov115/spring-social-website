@@ -1,5 +1,6 @@
 package com.spring.social_website.auth;
 
+import com.spring.social_website.auth.dto.ChangePasswordRequestDto;
 import com.spring.social_website.auth.dto.LoginRequestDto;
 import com.spring.social_website.auth.dto.LoginResponseDto;
 import com.spring.social_website.auth.dto.RegisterResponseDto;
@@ -8,10 +9,12 @@ import com.spring.social_website.auth.jwt.JwtService;
 import com.spring.social_website.auth.token.RefreshTokenEntity;
 import com.spring.social_website.auth.token.RefreshTokenService;
 import com.spring.social_website.exception.EmailAlreadyInUseException;
+import com.spring.social_website.exception.InvalidPasswordException;
 import com.spring.social_website.user.UserEntity;
 import com.spring.social_website.user.UserRepository;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,13 +32,12 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
 
     public LoginResponseDto login(LoginRequestDto request, HttpServletResponse response) {
-        authenticationManager.authenticate(
+        var auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.email(),
                         request.password()));
 
-        UserEntity user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        UserEntity user = (UserEntity) auth.getPrincipal();
 
         String refreshToken = refreshTokenService.createAndPersist(user);
         refreshTokenService.addCookie(refreshToken, response);
@@ -61,9 +63,20 @@ public class AuthService {
         return new RegisterResponseDto("User registered successfully");
     }
 
+    @Transactional 
+    public void changePassword(String email, ChangePasswordRequestDto request){
+        UserEntity user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+        if(!passwordEncoder.matches(request.currentPassword(), user.getPassword())){
+            throw new InvalidPasswordException();
+        }
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+    }
+
     public LoginResponseDto refresh(String refreshToken){
         RefreshTokenEntity tokenEntity = refreshTokenService.validate(refreshToken);
         String newAccessToken = jwtService.generateToken(tokenEntity.getUser().getEmail());
         return new LoginResponseDto(newAccessToken);
     }
+
 }
