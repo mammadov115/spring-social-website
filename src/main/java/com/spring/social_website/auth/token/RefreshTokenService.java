@@ -56,7 +56,7 @@ public class RefreshTokenService {
         Cookie cookie = new Cookie("refresh_token", token);
         cookie.setHttpOnly(true);
         cookie.setSecure(true);   // prod-da HTTPS
-        cookie.setPath("/api/auth/refresh");
+        cookie.setPath("/api/auth");
         cookie.setMaxAge(REFRESH_TOKEN_DAYS * 24 * 60 * 60);
         response.addCookie(cookie);
     }
@@ -67,7 +67,7 @@ public class RefreshTokenService {
 
         Cookie cookie = new Cookie("refresh_token", "");
         cookie.setHttpOnly(true);
-        cookie.setPath("/api/auth/refresh");
+        cookie.setPath("/api/auth");
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }
