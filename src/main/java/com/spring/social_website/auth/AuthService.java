@@ -1,11 +1,15 @@
 package com.spring.social_website.auth;
 
 import com.spring.social_website.auth.dto.ChangePasswordRequestDto;
+import com.spring.social_website.auth.dto.ForgotPasswordRequestDto;
 import com.spring.social_website.auth.dto.LoginRequestDto;
 import com.spring.social_website.auth.dto.LoginResponseDto;
 import com.spring.social_website.auth.dto.RegisterResponseDto;
+import com.spring.social_website.auth.dto.ResetPasswordRequestDto;
 import com.spring.social_website.auth.dto.RegisterRequestDto;
 import com.spring.social_website.auth.jwt.JwtService;
+import com.spring.social_website.auth.passwordreset.PasswordResetTokenEntity;
+import com.spring.social_website.auth.passwordreset.PasswordResetTokenService;
 import com.spring.social_website.auth.token.RefreshTokenEntity;
 import com.spring.social_website.auth.token.RefreshTokenService;
 import com.spring.social_website.exception.EmailAlreadyInUseException;
@@ -25,11 +29,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthService {
 
+    private final PasswordResetTokenService passwordResetTokenService;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+
 
     public LoginResponseDto login(LoginRequestDto request, HttpServletResponse response) {
         var auth = authenticationManager.authenticate(
@@ -78,5 +84,20 @@ public class AuthService {
         String newAccessToken = jwtService.generateToken(tokenEntity.getUser().getEmail());
         return new LoginResponseDto(newAccessToken);
     }
+
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequestDto request){
+        userRepository.findByEmail(request.email()).ifPresent(passwordResetTokenService::createAndSend);
+    }
+
+    @Transactional 
+    public  void resetPassword(ResetPasswordRequestDto request){
+        PasswordResetTokenEntity tokenEntity = passwordResetTokenService.validateAndGet(request.token());
+        UserEntity user = tokenEntity.getUser();
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+        passwordResetTokenService.deleteByUserId(user.getId());
+    }
+
 
 }

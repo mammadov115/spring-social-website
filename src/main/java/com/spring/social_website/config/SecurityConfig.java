@@ -4,8 +4,6 @@ import com.spring.social_website.user.UserDetailsServiceImpl;
 import com.spring.social_website.auth.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.web.access.AccessDeniedHandler;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,7 +39,7 @@ public class SecurityConfig {
                             response.sendError(403, accessDeniedException.getMessage());
                         }))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout","/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

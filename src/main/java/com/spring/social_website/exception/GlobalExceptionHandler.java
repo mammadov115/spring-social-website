@@ -1,58 +1,64 @@
 package com.spring.social_website.exception;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private Map<String, Object> failBody(String field, String message){
+        return Map.of("status", "error", "message", "An unexpected error occured");
+    }
+
     @ExceptionHandler(InvalidTokenException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidToken(InvalidTokenException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody(ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failBody("token",ex.getMessage()));
     }
 
     @ExceptionHandler(EmailAlreadyInUseException.class)
     public ResponseEntity<Map<String, Object>> handleEmailInUse(EmailAlreadyInUseException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorBody(ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(failBody("email",ex.getMessage()));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody("Invalid email or password"));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failBody("credentials","Invalid email or password"));
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleUserNotFound(UsernameNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody("Invalid email or password"));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failBody("credentials","Invalid email or password"));
     }
 
     @ExceptionHandler(InvalidPasswordException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidPassword(InvalidPasswordException ex){
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failBody("currentPassword", ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
-        String errors = ex.getBindingResult().getFieldErrors().stream()
-                .map(e -> e.getField() + ": " + e.getDefaultMessage())
-                .collect(Collectors.joining(", "));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(errors));
+        Map<String, Object> fieldErrors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors()
+        .forEach(e -> fieldErrors.put(e.getField(), e.getDefaultMessage()));
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("status", "fail");
+        body.put("data", fieldErrors);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(body);
+
     }
 
-    private Map<String, Object> errorBody(String message) {
-        return Map.of(
-            "message", message,
-            "timestamp", LocalDateTime.now()
-        );
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex){
+        return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("status", "error", "message", "An unexpected error occured"));
     }
+
 }

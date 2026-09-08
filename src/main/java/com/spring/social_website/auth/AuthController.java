@@ -1,15 +1,20 @@
 package com.spring.social_website.auth;
 
 import com.spring.social_website.auth.dto.ChangePasswordRequestDto;
+import com.spring.social_website.auth.dto.ForgotPasswordRequestDto;
 import com.spring.social_website.auth.dto.LoginRequestDto;
 import com.spring.social_website.auth.dto.LoginResponseDto;
 import com.spring.social_website.auth.dto.RegisterRequestDto;
 import com.spring.social_website.auth.dto.RegisterResponseDto;
+import com.spring.social_website.auth.dto.ResetPasswordRequestDto;
 import com.spring.social_website.auth.token.RefreshTokenService;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -60,6 +65,18 @@ public class AuthController {
     public ResponseEntity<Void> changePassword(@AuthenticationPrincipal  String email, @Valid @RequestBody ChangePasswordRequestDto request) {
         authService.changePassword(email, request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, Object>> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDto request){
+        authService.forgotPassword(request);
+        return ResponseEntity.ok(Map.of("status", "success" ,"data", Map.of("message", "If this email is registered, a reset link has been sent")));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, Object>> resetPassword(@Valid @RequestBody ResetPasswordRequestDto request){
+        authService.resetPassword(request);
+        return ResponseEntity.ok(Map.of( "message", "Password reset successfully" ));
     }
     
 }
