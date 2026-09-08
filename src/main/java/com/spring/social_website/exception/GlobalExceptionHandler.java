@@ -15,7 +15,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private Map<String, Object> failBody(String field, String message){
-        return Map.of("status", "error", "message", "An unexpected error occured");
+        return Map.of("status", "fail", "data", Map.of(field, message));
     }
 
     @ExceptionHandler(InvalidTokenException.class)

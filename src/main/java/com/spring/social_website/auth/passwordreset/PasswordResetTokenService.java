@@ -3,27 +3,25 @@ package com.spring.social_website.auth.passwordreset;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import com.spring.social_website.exception.InvalidTokenException;
 import com.spring.social_website.user.UserEntity;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PasswordResetTokenService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final JavaMailSender mailSender;
+    private final MailService mailService;
 
     @Value("${app.base-url}")
     private String baseUrl;
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
 
     @Transactional
     public void createAndSend(UserEntity user) {
@@ -42,21 +40,17 @@ public class PasswordResetTokenService {
 
         String resetLink = baseUrl + "/api/auth/reset-password?token=" + token;
 
-        SimpleMailMessage message = new SimpleMailMessage();
-
-        message.setFrom(fromEmail);
-        message.setTo(user.getEmail());
-        message.setSubject("Password Reset Request");
-        message.setText("Click the link to reset your password (expires in 15 minutes)\n\n " + resetLink);
-        mailSender.send(message);
+        mailService.sendMailAsync(user.getEmail(), resetLink);
     }
 
-    @Transactional 
-    public PasswordResetTokenEntity validateAndGet(String token){
-        PasswordResetTokenEntity entity = passwordResetTokenRepository.findByToken(token)
-        .orElseThrow(()-> new InvalidTokenException("Invalid or expired token"));
 
-        if(entity.isExpired()){
+
+    @Transactional
+    public PasswordResetTokenEntity validateAndGet(String token) {
+        PasswordResetTokenEntity entity = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new InvalidTokenException("Invalid or expired token"));
+
+        if (entity.isExpired()) {
             passwordResetTokenRepository.delete(entity);
             throw new InvalidTokenException("Invalid or expired token");
         }
@@ -64,8 +58,8 @@ public class PasswordResetTokenService {
         return entity;
     }
 
-    @Transactional 
-    public void  deleteByUserId(UUID userId){
+    @Transactional
+    public void deleteByUserId(UUID userId) {
         passwordResetTokenRepository.deleteByUserId(userId);
     }
 }

@@ -54,3 +54,9 @@ app:
 logging:
   level:
     org.flywaydb: DEBUG
+
+
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true

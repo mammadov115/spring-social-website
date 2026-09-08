@@ -85,7 +85,6 @@ public class AuthService {
         return new LoginResponseDto(newAccessToken);
     }
 
-    @Transactional
     public void forgotPassword(ForgotPasswordRequestDto request){
         userRepository.findByEmail(request.email()).ifPresent(passwordResetTokenService::createAndSend);
     }

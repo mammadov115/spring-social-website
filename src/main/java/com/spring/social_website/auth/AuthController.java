@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -76,7 +77,11 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, Object>> resetPassword(@Valid @RequestBody ResetPasswordRequestDto request){
         authService.resetPassword(request);
-        return ResponseEntity.ok(Map.of( "message", "Password reset successfully" ));
-    }
+        Map<String,Object> data = new HashMap<>();
+        data.put("status", "success");
+        data.put("data", Map.of("message", "Password reset successfully"));
+        return ResponseEntity.ok(data);
+
+        }
     
 }
