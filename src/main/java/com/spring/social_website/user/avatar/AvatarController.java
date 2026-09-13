@@ -33,13 +33,13 @@ public class AvatarController {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Avatar uploaded successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid file — wrong format or missing file"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized — missing or invalid token")
+        @ApiResponse(responseCode = "400", description = "Invalid file - wrong format or missing file"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - missing or invalid token")
     })
-    @PutMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.ALL_VALUE})
     public ResponseEntity<?> uploadAvatar(
             @AuthenticationPrincipal String email,
-            @RequestParam("file") MultipartFile file) throws IOException {
+            @RequestParam(value = "file", required = false) MultipartFile file) throws IOException {
 
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body(
