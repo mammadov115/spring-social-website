@@ -16,6 +16,7 @@ import com.spring.social_website.exception.EmailAlreadyInUseException;
 import com.spring.social_website.exception.InvalidPasswordException;
 import com.spring.social_website.user.UserEntity;
 import com.spring.social_website.user.UserRepository;
+import com.spring.social_website.user.profile.ProfileService;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +36,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
-
+    private final ProfileService profileService;
 
     public LoginResponseDto login(LoginRequestDto request, HttpServletResponse response) {
         var auth = authenticationManager.authenticate(
@@ -52,6 +53,7 @@ public class AuthService {
         return new LoginResponseDto(accessToken);
     }
 
+    @Transactional
     public RegisterResponseDto register(RegisterRequestDto request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new EmailAlreadyInUseException();
@@ -65,6 +67,7 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+        profileService.createForUser(user);
 
         return new RegisterResponseDto("User registered successfully");
     }
