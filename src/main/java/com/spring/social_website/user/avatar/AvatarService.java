@@ -38,10 +38,9 @@ public class AvatarService {
         }
 
         Map<?, ?> result = cloudinary.uploader().upload(file.getBytes(), Map.of(
-                "folder",          "avatars",
-                "transformation",  "c_fill,w_400,h_400,g_face",
-                "allowed_formats", new String[]{"jpg", "jpeg", "png", "webp"}
-        ));
+                "folder", "avatars",
+                "transformation", "c_fill,w_400,h_400,g_face",
+                "allowed_formats", new String[] { "jpg", "jpeg", "png", "webp" }));
 
         String url = (String) result.get("secure_url");
         profile.setAvatarUrl(url);
@@ -52,7 +51,8 @@ public class AvatarService {
 
     // extracts public_id from Cloudinary URL for deletion
     private String extractPublicId(String url) {
-        // e.g. https://res.cloudinary.com/demo/image/upload/v123/avatars/abc.jpg -> avatars/abc
+        // e.g. https://res.cloudinary.com/demo/image/upload/v123/avatars/abc.jpg ->
+        // avatars/abc
         int uploadIdx = url.indexOf("/upload/");
         String afterUpload = url.substring(uploadIdx + 8);
         // strip version segment if present (v1234567890/)
