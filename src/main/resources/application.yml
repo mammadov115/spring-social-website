@@ -1,6 +1,17 @@
 spring:
   application:
     name: spring-social-website
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -55,8 +66,17 @@ logging:
   level:
     org.flywaydb: DEBUG
 
-
 decorator:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
   datasource:
     p6spy:
       enable-logging: true

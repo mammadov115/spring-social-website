@@ -34,7 +34,7 @@ public class UserEntity implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     @Column(name = "first_name")
@@ -44,11 +44,18 @@ public class UserEntity implements UserDetails {
     private String lastName;
 
     @Builder.Default
+    @Column(nullable = false)
+    private String provider = "local";
+
+    @Column(name = "provider_id")
+    private String providerId;
+
+    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore 
+    @JsonIgnore
     private ProfileEntity profile;
 
     @Override
