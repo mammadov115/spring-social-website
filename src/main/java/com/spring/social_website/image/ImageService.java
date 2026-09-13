@@ -1,6 +1,7 @@
 package com.spring.social_website.image;
 
 import com.cloudinary.Cloudinary;
+import com.spring.social_website.image.ImageRepository.ImageCount;
 import com.spring.social_website.image.dto.ImageResponseDto;
 import com.spring.social_website.image.dto.ImageUploadRequestDto;
 import com.spring.social_website.user.UserEntity;
@@ -15,8 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,20 +49,18 @@ public class ImageService {
                 .owner(owner)
                 .build();
 
-        return toDto(imageRepository.save(image), owner);
+        return toDtoSingle(imageRepository.save(image), email);
     }
 
     @Transactional(readOnly = true)
     public Page<ImageResponseDto> getFeed(String email, Pageable pageable) {
-        UserEntity me = findUser(email);
-        return imageRepository.findAllWithOwner(pageable)
-                .map(image -> toDto(image, me));
+        Page<ImageEntity> page = imageRepository.findAllWithOwner(pageable);
+        return toDtoBatch(page, email);
     }
 
     @Transactional(readOnly = true)
     public ImageResponseDto getById(String email, UUID id) {
-        UserEntity me = findUser(email);
-        return toDto(findImage(id), me);
+        return toDtoSingle(findImage(id), email);
     }
 
     @Transactional
@@ -69,7 +72,6 @@ public class ImageService {
             throw new AccessDeniedException("You can only delete your own images");
         }
 
-        // extract public id and delete from Cloudinary
         String publicId = extractPublicId(image.getImageUrl());
         try {
             cloudinary.uploader().destroy(publicId, Map.of());
@@ -91,7 +93,7 @@ public class ImageService {
             image.getLikedBy().add(me);
         }
 
-        return toDto(imageRepository.save(image), me);
+        return toDtoSingle(imageRepository.save(image), email);
     }
 
     @Transactional
@@ -105,14 +107,13 @@ public class ImageService {
             image.getBookmarkedBy().add(me);
         }
 
-        return toDto(imageRepository.save(image), me);
+        return toDtoSingle(imageRepository.save(image), email);
     }
 
     @Transactional(readOnly = true)
     public Page<ImageResponseDto> getBookmarks(String email, Pageable pageable) {
-        UserEntity me = findUser(email);
-        return imageRepository.findBookmarkedByUserEmail(email, pageable)
-                .map(image -> toDto(image, me));
+        Page<ImageEntity> page = imageRepository.findBookmarkedByUserEmail(email, pageable);
+        return toDtoBatch(page, email);
     }
 
     private UserEntity findUser(String email) {
@@ -125,32 +126,67 @@ public class ImageService {
                 .orElseThrow(() -> new EntityNotFoundException("Image not found"));
     }
 
-    private String extractPublicId(String url) {
-        // e.g. .../upload/v123/images/abc.jpg -> images/abc
-        int uploadIdx = url.indexOf("/upload/");
-        String afterUpload = url.substring(uploadIdx + 8);
-        // strip version segment if present
-        if (afterUpload.startsWith("v") && afterUpload.indexOf('/') > 0) {
-            afterUpload = afterUpload.substring(afterUpload.indexOf('/') + 1);
-        }
-        // strip extension
-        int dotIdx = afterUpload.lastIndexOf('.');
-        return dotIdx > 0 ? afterUpload.substring(0, dotIdx) : afterUpload;
-    }
-
-    private ImageResponseDto toDto(ImageEntity image, UserEntity me) {
+    // single image -- getById, toggleLike, toggleBookmark, upload ucun
+    private ImageResponseDto toDtoSingle(ImageEntity image, String email) {
+        UUID imageId = image.getId();
         return new ImageResponseDto(
-                image.getId(),
+                imageId,
                 image.getTitle(),
                 image.getDescription(),
                 image.getImageUrl(),
                 image.getOwner().getEmail(),
                 image.getOwner().getFirstName() + " " + image.getOwner().getLastName(),
-                image.getLikedBy().size(),
-                image.getBookmarkedBy().size(),
-                image.getLikedBy().contains(me),
-                image.getBookmarkedBy().contains(me),
+                imageRepository.countLikes(imageId),
+                imageRepository.countBookmarks(imageId),
+                imageRepository.isLikedBy(imageId, email),
+                imageRepository.isBookmarkedBy(imageId, email),
                 image.getCreatedAt()
         );
+    }
+
+    // batch -- getFeed, getBookmarks ucun; N image ucun sabit 4 query
+    private Page<ImageResponseDto> toDtoBatch(Page<ImageEntity> page, String email) {
+        List<UUID> ids = page.stream().map(ImageEntity::getId).toList();
+
+        if (ids.isEmpty()) {
+            return page.map(image -> toDtoSingle(image, email));
+        }
+
+        Map<UUID, Long> likeCounts = toCountMap(imageRepository.countLikesBatch(ids));
+        Map<UUID, Long> bookmarkCounts = toCountMap(imageRepository.countBookmarksBatch(ids));
+        Set<UUID> likedIds = Set.copyOf(imageRepository.findLikedImageIds(ids, email));
+        Set<UUID> bookmarkedIds = Set.copyOf(imageRepository.findBookmarkedImageIds(ids, email));
+
+        return page.map(image -> {
+            UUID imageId = image.getId();
+            return new ImageResponseDto(
+                    imageId,
+                    image.getTitle(),
+                    image.getDescription(),
+                    image.getImageUrl(),
+                    image.getOwner().getEmail(),
+                    image.getOwner().getFirstName() + " " + image.getOwner().getLastName(),
+                    likeCounts.getOrDefault(imageId, 0L).intValue(),
+                    bookmarkCounts.getOrDefault(imageId, 0L).intValue(),
+                    likedIds.contains(imageId),
+                    bookmarkedIds.contains(imageId),
+                    image.getCreatedAt()
+            );
+        });
+    }
+
+    private Map<UUID, Long> toCountMap(Collection<ImageCount> counts) {
+        return counts.stream()
+                .collect(Collectors.toMap(ImageCount::imageId, ImageCount::count));
+    }
+
+    private String extractPublicId(String url) {
+        int uploadIdx = url.indexOf("/upload/");
+        String afterUpload = url.substring(uploadIdx + 8);
+        if (afterUpload.startsWith("v") && afterUpload.indexOf('/') > 0) {
+            afterUpload = afterUpload.substring(afterUpload.indexOf('/') + 1);
+        }
+        int dotIdx = afterUpload.lastIndexOf('.');
+        return dotIdx > 0 ? afterUpload.substring(0, dotIdx) : afterUpload;
     }
 }
