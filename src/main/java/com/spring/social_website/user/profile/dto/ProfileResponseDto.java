@@ -24,13 +24,13 @@ public record ProfileResponseDto(
         @Schema(description = "Avatar URL", example = "https://example.com/avatar.jpg")
         String avatarUrl,
 
-        @Schema(description = "Email — null if emailPublic is false", example = "jane@example.com", nullable = true)
+        @Schema(description = "Email  null if emailPublic is false", example = "jane@example.com", nullable = true)
         String email,
 
-        @Schema(description = "Date of birth — null if birthDatePublic is false", example = "1995-06-15", nullable = true)
+        @Schema(description = "Date of birth  null if birthDatePublic is false", example = "1995-06-15", nullable = true)
         LocalDate birthDate,
 
-        @Schema(description = "Location — null if locationPublic is false", example = "Baku, Azerbaijan", nullable = true)
+        @Schema(description = "Location  null if locationPublic is false", example = "Baku, Azerbaijan", nullable = true)
         String location
 ) {
     public static ProfileResponseDto from(UserEntity user, ProfileEntity profile) {

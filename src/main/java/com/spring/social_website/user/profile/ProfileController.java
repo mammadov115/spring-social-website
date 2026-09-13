@@ -27,7 +27,7 @@ public class ProfileController {
     @Operation(summary = "Get my profile", description = "Returns the authenticated user's full profile including private fields", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Profile returned successfully"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized — missing or invalid token")
+        @ApiResponse(responseCode = "401", description = "Unauthorized  missing or invalid token")
     })
     @GetMapping("/api/me/profile")
     public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal String email) {
@@ -38,8 +38,8 @@ public class ProfileController {
     @Operation(summary = "Update my profile", description = "Partially updates the authenticated user's profile. All fields are optional.", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized — missing or invalid token"),
-        @ApiResponse(responseCode = "422", description = "Validation failed — one or more fields exceed allowed length")
+        @ApiResponse(responseCode = "401", description = "Unauthorized  missing or invalid token"),
+        @ApiResponse(responseCode = "422", description = "Validation failed  one or more fields exceed allowed length")
     })
     @PutMapping("/api/me/profile")
     public ResponseEntity<?> updateMyProfile(
