@@ -24,7 +24,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -41,21 +40,24 @@ public class AuthController {
         @ApiResponse(responseCode = "401", description = "Invalid email or password")
     })
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDto> login(
+    public ResponseEntity<Map<String, Object>> login(
             @Valid @RequestBody LoginRequestDto request,
             HttpServletResponse response) {
-        return ResponseEntity.ok(authService.login(request, response));
+        LoginResponseDto dto = authService.login(request, response);
+        return ResponseEntity.ok(Map.of("status", "success", "data", Map.of("auth", dto)));
     }
 
     @Operation(summary = "Register", description = "Creates a new user account.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Registration successful"),
+        @ApiResponse(responseCode = "201", description = "Registration successful"),
         @ApiResponse(responseCode = "409", description = "Email already in use"),
         @ApiResponse(responseCode = "422", description = "Validation failed")
     })
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponseDto> register(@Valid @RequestBody RegisterRequestDto request) {
-        return ResponseEntity.ok(authService.register(request));
+    public ResponseEntity<Map<String, Object>> register(@Valid @RequestBody RegisterRequestDto request) {
+        RegisterResponseDto dto = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("status", "success", "data", Map.of("user", dto)));
     }
 
     @Operation(summary = "Refresh token", description = "Issues a new access token using the refresh token cookie.")
@@ -64,13 +66,15 @@ public class AuthController {
         @ApiResponse(responseCode = "401", description = "Missing or invalid refresh token")
     })
     @PostMapping("/refresh")
-    public ResponseEntity<LoginResponseDto> refresh(
+    public ResponseEntity<Map<String, Object>> refresh(
             @CookieValue(name = "refresh_token", required = false) String refreshToken,
             HttpServletResponse response) {
         if (refreshToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("status", "fail", "data", Map.of("token", "Refresh token is missing")));
         }
-        return ResponseEntity.ok(authService.refresh(refreshToken));
+        LoginResponseDto dto = authService.refresh(refreshToken);
+        return ResponseEntity.ok(Map.of("status", "success", "data", Map.of("auth", dto)));
     }
 
     @Operation(summary = "Logout", description = "Invalidates the refresh token cookie and logs the user out.")
@@ -91,7 +95,7 @@ public class AuthController {
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Password changed successfully"),
         @ApiResponse(responseCode = "400", description = "Current password is incorrect"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized  missing or invalid token"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "422", description = "Validation failed")
     })
     @PostMapping("/change-password")
@@ -110,7 +114,8 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, Object>> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDto request) {
         authService.forgotPassword(request);
-        return ResponseEntity.ok(Map.of("status", "success", "data", Map.of("message", "If this email is registered, a reset link has been sent")));
+        return ResponseEntity.ok(Map.of("status", "success", "data",
+                Map.of("message", "If this email is registered, a reset link has been sent")));
     }
 
     @Operation(summary = "Reset password", description = "Resets the user's password using a valid reset token.")
@@ -122,10 +127,8 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, Object>> resetPassword(@Valid @RequestBody ResetPasswordRequestDto request) {
         authService.resetPassword(request);
-        Map<String, Object> data = new HashMap<>();
-        data.put("status", "success");
-        data.put("data", Map.of("message", "Password reset successfully"));
-        return ResponseEntity.ok(data);
+        return ResponseEntity.ok(Map.of("status", "success", "data",
+                Map.of("message", "Password reset successfully")));
     }
 
     @Operation(summary = "OAuth2 callback", description = "Receives the access token after OAuth2 login and returns it as JSON.")
@@ -134,9 +137,6 @@ public class AuthController {
     })
     @GetMapping("/oauth2/callback")
     public ResponseEntity<Map<String, Object>> oauth2Callback(@RequestParam("token") String token) {
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "data", Map.of("accessToken", token)
-        ));
+        return ResponseEntity.ok(Map.of("status", "success", "data", Map.of("accessToken", token)));
     }
 }
