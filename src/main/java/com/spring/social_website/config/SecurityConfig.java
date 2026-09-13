@@ -76,7 +76,13 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
-                        .successHandler(oauth2SuccessHandler))
+                        .successHandler(oauth2SuccessHandler)
+                        .failureHandler((request, response, exception) -> {
+                            response.setStatus(401);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            MAPPER.writeValue(response.getOutputStream(),
+                                Map.of("status", "error", "message", exception.getMessage()));
+                        }))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
