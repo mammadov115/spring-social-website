@@ -38,8 +38,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String firstName = oauth2User.getAttribute("given_name");
         String lastName = oauth2User.getAttribute("family_name");
         String providerId = oauth2User.getAttribute("sub");
+        String pictureUrl = oauth2User.getAttribute("picture");
 
-        UserEntity user = findOrCreateUser(email, firstName, lastName, providerId);
+        UserEntity user = findOrCreateUser(email, firstName, lastName, providerId, pictureUrl);
 
         String accessToken = jwtService.generateToken(user.getEmail());
         String refreshToken = refreshTokenService.createAndPersist(user);
@@ -50,7 +51,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     }
 
     private UserEntity findOrCreateUser(String email, String firstName,
-                                        String lastName, String providerId) {
+                                        String lastName, String providerId, String pictureUrl) {
         Optional<UserEntity> existing = userRepository.findByEmail(email);
 
         if (existing.isPresent()) {
@@ -70,6 +71,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         ProfileEntity profile = ProfileEntity.builder()
                 .user(user)
+                .avatarUrl(pictureUrl)
                 .build();
         profileRepository.save(profile);
 
