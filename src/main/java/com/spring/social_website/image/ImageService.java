@@ -47,12 +47,14 @@ public class ImageService {
         return toDto(imageRepository.save(image), owner);
     }
 
+    @Transactional(readOnly = true)
     public Page<ImageResponseDto> getFeed(String email, Pageable pageable) {
         UserEntity me = findUser(email);
-        return imageRepository.findAllByOrderByCreatedAtDesc(pageable)
+        return imageRepository.findAllWithOwner(pageable)
                 .map(image -> toDto(image, me));
     }
 
+    @Transactional(readOnly = true)
     public ImageResponseDto getById(String email, UUID id) {
         UserEntity me = findUser(email);
         return toDto(findImage(id), me);
@@ -106,6 +108,7 @@ public class ImageService {
         return toDto(imageRepository.save(image), me);
     }
 
+    @Transactional(readOnly = true)
     public Page<ImageResponseDto> getBookmarks(String email, Pageable pageable) {
         UserEntity me = findUser(email);
         return imageRepository.findBookmarkedByUserEmail(email, pageable)

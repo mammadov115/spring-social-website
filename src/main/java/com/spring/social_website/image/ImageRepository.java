@@ -10,8 +10,10 @@ import java.util.UUID;
 
 public interface ImageRepository extends JpaRepository<ImageEntity, UUID> {
 
-    Page<ImageEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    @Query("SELECT i FROM ImageEntity i JOIN FETCH i.owner ORDER BY i.createdAt DESC")
+    Page<ImageEntity> findAllWithOwner(Pageable pageable);
 
-    @Query("SELECT i FROM ImageEntity i JOIN i.bookmarkedBy b WHERE b.email = :email ORDER BY i.createdAt DESC")
+    @Query(value = "SELECT i FROM ImageEntity i JOIN FETCH i.owner JOIN i.bookmarkedBy b WHERE b.email = :email ORDER BY i.createdAt DESC",
+           countQuery = "SELECT COUNT(i) FROM ImageEntity i JOIN i.bookmarkedBy b WHERE b.email = :email")
     Page<ImageEntity> findBookmarkedByUserEmail(@Param("email") String email, Pageable pageable);
 }
