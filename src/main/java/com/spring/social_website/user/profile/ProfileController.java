@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -20,16 +19,16 @@ public class ProfileController {
     private final ProfileService profileService;
 
     @GetMapping("/api/me/profile")
-    public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal UserDetails userDetails) {
-        MyProfileResponseDto profile = profileService.getMyProfile(userDetails.getUsername());
+    public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal String email) {
+        MyProfileResponseDto profile = profileService.getMyProfile(email);
         return ResponseEntity.ok(Map.of("status", "success", "data", Map.of("profile", profile)));
     }
 
     @PutMapping("/api/me/profile")
     public ResponseEntity<?> updateMyProfile(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal String email,
             @Valid @RequestBody UpdateProfileRequestDto request) {
-        MyProfileResponseDto profile = profileService.updateMyProfile(userDetails.getUsername(), request);
+        MyProfileResponseDto profile = profileService.updateMyProfile(email, request);
         return ResponseEntity.ok(Map.of("status", "success", "data", Map.of("profile", profile)));
     }
 
