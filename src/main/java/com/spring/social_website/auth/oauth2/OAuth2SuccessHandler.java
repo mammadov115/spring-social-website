@@ -46,7 +46,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         refreshTokenService.addCookie(refreshToken, response);
 
         getRedirectStrategy().sendRedirect(request, response,
-                "/oauth2/callback?token=" + accessToken);
+                "/api/auth/oauth2/callback?token=" + accessToken);
     }
 
     private UserEntity findOrCreateUser(String email, String firstName,

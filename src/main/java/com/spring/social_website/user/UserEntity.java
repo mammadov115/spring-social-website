@@ -35,6 +35,7 @@ public class UserEntity implements UserDetails {
     private String email;
 
     @Column(nullable = true)
+    @JsonIgnore
     private String password;
 
     @Column(name = "first_name")

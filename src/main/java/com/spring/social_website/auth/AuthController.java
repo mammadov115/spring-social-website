@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -125,5 +126,17 @@ public class AuthController {
         data.put("status", "success");
         data.put("data", Map.of("message", "Password reset successfully"));
         return ResponseEntity.ok(data);
+    }
+
+    @Operation(summary = "OAuth2 callback", description = "Receives the access token after OAuth2 login and returns it as JSON.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "OAuth2 login successful")
+    })
+    @GetMapping("/oauth2/callback")
+    public ResponseEntity<Map<String, Object>> oauth2Callback(@RequestParam("token") String token) {
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "data", Map.of("accessToken", token)
+        ));
     }
 }

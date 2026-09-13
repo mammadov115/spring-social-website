@@ -65,6 +65,7 @@ public class SecurityConfig {
                                 "/api/auth/logout",
                                 "/api/auth/forgot-password",
                                 "/api/auth/reset-password",
+                                "/api/auth/oauth2/callback",
                                 "/oauth2/**",
                                 "/login/oauth2/**"
                         ).permitAll()
