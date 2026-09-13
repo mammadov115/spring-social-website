@@ -12,6 +12,7 @@ import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.spring.social_website.user.profile.ProfileEntity;
 
 import java.util.UUID;
@@ -47,6 +48,7 @@ public class UserEntity implements UserDetails {
     private boolean isActive = true;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore 
     private ProfileEntity profile;
 
     @Override
