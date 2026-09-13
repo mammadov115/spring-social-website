@@ -37,13 +37,10 @@ public class ProfileService {
     }
 
     public ProfileResponseDto getProfileByUserId(UUID targetUserId) {
-        UserEntity user = userRepository.findById(targetUserId)
+        ProfileEntity profile = profileRepository.findByUserIdWithUser(targetUserId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        ProfileEntity profile = profileRepository.findByUserId(targetUserId)
-                .orElseThrow(() -> new EntityNotFoundException("Profile not found"));
-
-        return ProfileResponseDto.from(user, profile);
+        return ProfileResponseDto.from(profile.getUser(), profile);
     }
 
     @Transactional
@@ -54,16 +51,18 @@ public class ProfileService {
         ProfileEntity profile = profileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Profile not found"));
 
-        if (request.bio() != null)              profile.setBio(request.bio());
-        if (request.avatarUrl() != null)        profile.setAvatarUrl(request.avatarUrl());
-        if (request.birthDate() != null)        profile.setBirthDate(request.birthDate());
-        if (request.location() != null)         profile.setLocation(request.location());
-        if (request.isEmailPublic() != null)    profile.setEmailPublic(request.isEmailPublic());
+        if (request.bio() != null)               profile.setBio(request.bio());
+        if (request.avatarUrl() != null)         profile.setAvatarUrl(request.avatarUrl());
+        if (request.birthDate() != null)         profile.setBirthDate(request.birthDate());
+        if (request.location() != null)          profile.setLocation(request.location());
+        if (request.isEmailPublic() != null)     profile.setEmailPublic(request.isEmailPublic());
         if (request.isBirthDatePublic() != null) profile.setBirthDatePublic(request.isBirthDatePublic());
-        if (request.isLocationPublic() != null) profile.setLocationPublic(request.isLocationPublic());
+        if (request.isLocationPublic() != null)  profile.setLocationPublic(request.isLocationPublic());
 
         if (request.firstName() != null) user.setFirstName(request.firstName());
         if (request.lastName() != null)  user.setLastName(request.lastName());
+
+        profileRepository.save(profile);
 
         return MyProfileResponseDto.from(user, profile);
     }
