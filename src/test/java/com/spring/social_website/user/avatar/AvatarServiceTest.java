@@ -62,8 +62,6 @@ class AvatarServiceTest {
         profile = new ProfileEntity();
         profile.setId(UUID.randomUUID());
         profile.setAvatarUrl(null);
-
-        when(cloudinary.uploader()).thenReturn(uploader);
     }
 
     @Test
@@ -72,6 +70,7 @@ class AvatarServiceTest {
         byte[] imageBytes = new byte[]{1, 2, 3};
         String expectedUrl = "https://res.cloudinary.com/demo/image/upload/v123/avatars/abc.jpg";
 
+        when(cloudinary.uploader()).thenReturn(uploader);
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
         when(profileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(file.getBytes()).thenReturn(imageBytes);
@@ -94,6 +93,7 @@ class AvatarServiceTest {
         String newUrl = "https://res.cloudinary.com/demo/image/upload/v456/avatars/new.jpg";
         profile.setAvatarUrl(oldUrl);
 
+        when(cloudinary.uploader()).thenReturn(uploader);
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
         when(profileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(file.getBytes()).thenReturn(new byte[]{1, 2, 3});
@@ -138,6 +138,7 @@ class AvatarServiceTest {
     @Test
     void uploadAvatar_propagatesIOException_whenCloudinaryFails() throws IOException {
         // Arrange
+        when(cloudinary.uploader()).thenReturn(uploader);
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
         when(profileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(file.getBytes()).thenReturn(new byte[]{1, 2, 3});
@@ -153,10 +154,11 @@ class AvatarServiceTest {
 
     @Test
     void uploadAvatar_extractsPublicId_withVersionSegment() throws IOException {
-        // Arrange - URL with version segment (v1789301667/)
+        // Arrange
         String oldUrl = "https://res.cloudinary.com/demo/image/upload/v1789301667/avatars/abc.jpg";
         profile.setAvatarUrl(oldUrl);
 
+        when(cloudinary.uploader()).thenReturn(uploader);
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
         when(profileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(file.getBytes()).thenReturn(new byte[]{1, 2, 3});
@@ -167,7 +169,7 @@ class AvatarServiceTest {
         // Act
         avatarService.uploadAvatar("test@test.com", file);
 
-        // Assert - version segment stripped correctly
+        // Assert
         verify(uploader).destroy(eq("avatars/abc"), any());
     }
 }
