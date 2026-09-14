@@ -60,7 +60,7 @@ public class ImageService {
 
     @Transactional(readOnly = true)
     public ImageResponseDto getById(String email, UUID id) {
-        return toDtoSingle(findImage(id), email);
+        return toDtoSingle(findImageWithOwner(id), email);
     }
 
     @Transactional
@@ -85,9 +85,9 @@ public class ImageService {
     @Transactional
     public ImageResponseDto toggleLike(String email, UUID id) {
         UserEntity me = findUser(email);
-        ImageEntity image = findImage(id);
+        ImageEntity image = findImageWithOwner(id);
 
-        if (image.getLikedBy().contains(me)) {
+        if (imageRepository.isLikedBy(id, email)) {
             image.getLikedBy().remove(me);
         } else {
             image.getLikedBy().add(me);
@@ -99,9 +99,9 @@ public class ImageService {
     @Transactional
     public ImageResponseDto toggleBookmark(String email, UUID id) {
         UserEntity me = findUser(email);
-        ImageEntity image = findImage(id);
+        ImageEntity image = findImageWithOwner(id);
 
-        if (image.getBookmarkedBy().contains(me)) {
+        if (imageRepository.isBookmarkedBy(id, email)) {
             image.getBookmarkedBy().remove(me);
         } else {
             image.getBookmarkedBy().add(me);
@@ -123,6 +123,12 @@ public class ImageService {
 
     private ImageEntity findImage(UUID id) {
         return imageRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Image not found"));
+    }
+
+    // Load the `owner` using `JOIN FETCH` for `getById`, `toggleLike`, and `toggleBookmark`.
+    private ImageEntity findImageWithOwner(UUID id) {
+        return imageRepository.findByIdWithOwner(id)
                 .orElseThrow(() -> new EntityNotFoundException("Image not found"));
     }
 

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,8 +33,11 @@ public interface ImageRepository extends JpaRepository<ImageEntity, UUID> {
     @Query("SELECT COUNT(u) > 0 FROM ImageEntity i JOIN i.bookmarkedBy u WHERE i.id = :imageId AND u.email = :email")
     boolean isBookmarkedBy(@Param("imageId") UUID imageId, @Param("email") String email);
 
-    // batch queries -- list endpoints ucun N+1-i ler edir
+    // batch queries
     record ImageCount(UUID imageId, long count) {}
+
+    @Query("SELECT i FROM ImageEntity i JOIN FETCH i.owner WHERE i.id = :id")
+    Optional<ImageEntity> findByIdWithOwner(@Param("id") UUID id);
 
     @Query("SELECT new com.spring.social_website.image.ImageRepository$ImageCount(i.id, COUNT(u)) " +
            "FROM ImageEntity i JOIN i.likedBy u WHERE i.id IN :ids GROUP BY i.id")
