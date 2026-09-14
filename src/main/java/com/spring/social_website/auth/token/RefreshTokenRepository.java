@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshTokenEntity, Long> {
 
@@ -15,8 +16,8 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshTokenEntity
     Optional<RefreshTokenEntity> findByToken(String token);
 
     @Modifying
-    @Query("DELETE FROM RefreshTokenEntity r WHERE r.user = :user")
-    void deleteByUser(@Param("user") UserEntity user);
+    @Query("DELETE FROM RefreshTokenEntity r WHERE r.user.id = :userId")
+    void deleteByUserId(@Param("userId") UUID userId);
 
     @Modifying
     @Query("DELETE FROM RefreshTokenEntity r WHERE r.token = :token")

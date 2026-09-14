@@ -23,7 +23,7 @@ public class RefreshTokenService {
 
     @Transactional
     public String createAndPersist(UserEntity user) {
-        refreshTokenRepository.deleteByUser(user);
+        refreshTokenRepository.deleteByUserId(user.getId());
         String raw = UUID.randomUUID().toString();
         RefreshTokenEntity entity = RefreshTokenEntity.builder()
                 .token(raw)

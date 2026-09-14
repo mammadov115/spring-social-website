@@ -74,6 +74,12 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
+								
+                        ).permitAll()
+                        .requestMatchers(
+                                        "/actuator/**",
+										"/query-tracker/**",
+										"/query-tracker"
                         ).permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
