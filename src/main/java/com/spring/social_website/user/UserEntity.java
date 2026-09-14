@@ -55,7 +55,7 @@ public class UserEntity implements UserDetails {
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
     @JsonIgnore
     private ProfileEntity profile;
 
