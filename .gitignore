@@ -34,3 +34,4 @@ build/
 graphify-out/*
 project/*
 cookies.txt
+query-tracker-traces.json

@@ -87,3 +87,13 @@ management:
   endpoint:
     prometheus:
       access: unrestricted
+
+sentry:
+  dsn: ${SENTRY_DSN}
+  send-default-pii: true
+  logs:
+    enabled: true
+  traces-sample-rate: 1.0
+  profile-session-sample-rate: 1.0
+  profile-lifecycle: TRACE
+  environment: development
