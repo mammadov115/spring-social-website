@@ -87,7 +87,3 @@ management:
   endpoint:
     prometheus:
       access: unrestricted
-
-springdoc:
-  default-produces-media-type: application/json
-  pageable-converter-enabled: true
