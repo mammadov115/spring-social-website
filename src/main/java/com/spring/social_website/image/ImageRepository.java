@@ -37,7 +37,7 @@ public interface ImageRepository extends JpaRepository<ImageEntity, UUID> {
     // batch queries
     record ImageCount(UUID imageId, long count) {}
 
-    @Query("SELECT i FROM ImageEntity i JOIN FETCH i.owner WHERE i.id = :id")
+    @Query("SELECT i FROM ImageEntity i JOIN FETCH i.owner o LEFT JOIN FETCH o.profile WHERE i.id = :id")
     Optional<ImageEntity> findByIdWithOwner(@Param("id") UUID id);
 
     @Query("SELECT new com.spring.social_website.image.ImageRepository$ImageCount(i.id, COUNT(u)) " +
