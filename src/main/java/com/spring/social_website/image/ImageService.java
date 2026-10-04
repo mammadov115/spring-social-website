@@ -33,13 +33,12 @@ public class ImageService {
 
     @Transactional
     public ImageResponseDto upload(String email, ImageUploadRequestDto request,
-                                   MultipartFile file) throws IOException {
+            MultipartFile file) throws IOException {
         UserEntity owner = findUser(email);
 
         Map<?, ?> result = cloudinary.uploader().upload(
                 file.getBytes(),
-                Map.of("folder", "images")
-        );
+                Map.of("folder", "images"));
         String imageUrl = (String) result.get("secure_url");
 
         ImageEntity image = ImageEntity.builder()
@@ -98,16 +97,20 @@ public class ImageService {
 
     @Transactional
     public ImageResponseDto toggleBookmark(String email, UUID id) {
-        UserEntity me = findUser(email);
+        UUID userId = userRepository.findIdByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
         ImageEntity image = findImageWithOwner(id);
 
-        if (imageRepository.isBookmarkedBy(id, email)) {
-            image.getBookmarkedBy().remove(me);
+        boolean bookmarkedByMe;
+        int deleted = imageRepository.deleteBookmark(id, userId);
+        if (deleted > 0) {
+            bookmarkedByMe = false;
         } else {
-            image.getBookmarkedBy().add(me);
+            imageRepository.insertBookmark(id, userId);
+            bookmarkedByMe = true;
         }
 
-        return toDtoSingle(imageRepository.save(image), email);
+        return toDtoSingle(image, email, bookmarkedByMe);
     }
 
     @Transactional(readOnly = true)
@@ -126,14 +129,19 @@ public class ImageService {
                 .orElseThrow(() -> new EntityNotFoundException("Image not found"));
     }
 
-    // Load the `owner` using `JOIN FETCH` for `getById`, `toggleLike`, and `toggleBookmark`.
+    // Load the `owner` using `JOIN FETCH` for `getById`, `toggleLike`, and
+    // `toggleBookmark`.
     private ImageEntity findImageWithOwner(UUID id) {
         return imageRepository.findByIdWithOwner(id)
                 .orElseThrow(() -> new EntityNotFoundException("Image not found"));
     }
 
-    // single image -- getById, toggleLike, toggleBookmark, upload ucun
+    // single image -- getById, toggleLike, upload
     private ImageResponseDto toDtoSingle(ImageEntity image, String email) {
+        return toDtoSingle(image, email, imageRepository.isBookmarkedBy(image.getId(), email));
+    }
+
+    private ImageResponseDto toDtoSingle(ImageEntity image, String email, boolean bookmarkedByMe) {
         UUID imageId = image.getId();
         return new ImageResponseDto(
                 imageId,
@@ -145,9 +153,8 @@ public class ImageService {
                 imageRepository.countLikes(imageId),
                 imageRepository.countBookmarks(imageId),
                 imageRepository.isLikedBy(imageId, email),
-                imageRepository.isBookmarkedBy(imageId, email),
-                image.getCreatedAt()
-        );
+                bookmarkedByMe,
+                image.getCreatedAt());
     }
 
     // batch -- getFeed, getBookmarks ucun; N image ucun sabit 4 query
@@ -176,8 +183,7 @@ public class ImageService {
                     bookmarkCounts.getOrDefault(imageId, 0L).intValue(),
                     likedIds.contains(imageId),
                     bookmarkedIds.contains(imageId),
-                    image.getCreatedAt()
-            );
+                    image.getCreatedAt());
         });
     }
 

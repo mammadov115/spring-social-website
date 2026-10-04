@@ -3,6 +3,7 @@ package com.spring.social_website.image;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -53,4 +54,12 @@ public interface ImageRepository extends JpaRepository<ImageEntity, UUID> {
 
     @Query("SELECT i.id FROM ImageEntity i JOIN i.bookmarkedBy u WHERE i.id IN :ids AND u.email = :email")
     List<UUID> findBookmarkedImageIds(@Param("ids") Collection<UUID> ids, @Param("email") String email);
+
+    @Modifying
+    @Query(value = "DELETE FROM image_bookmarks WHERE image_id = :imageId AND user_id = :userId", nativeQuery = true)
+    int deleteBookmark(@Param("imageId") UUID imageId, @Param("userId") UUID userId);
+
+    @Modifying
+    @Query(value = "INSERT INTO image_bookmarks (image_id, user_id) VALUES (:imageId, :userId) ON CONFLICT DO NOTHING", nativeQuery = true)
+    int insertBookmark(@Param("imageId") UUID imageId, @Param("userId") UUID userId);
 }
